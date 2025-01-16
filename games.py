@@ -9,6 +9,8 @@ size = width, height = 1000, 1000
 screen = pygame.display.set_mode(size)
 fps = 60
 clock = pygame.time.Clock()
+health = 3
+health_array = ['0.png', '1.png', '2.png', '3.png']
 
 
 def load_image(name, colorkey=None):
@@ -57,9 +59,24 @@ class Landing(pygame.sprite.Sprite):
         # если ещё в небе
         if self.rect.y < height - 85:
             self.rect = self.rect.move(0, 2)
+        else:
+            Health(health - 1)
+            self.remove(bomb_group)
         if pygame.sprite.spritecollideany(self, bullet_group):
             self.image = load_image("boom.png")
             self.remove(bomb_group)
+
+
+class Health(pygame.sprite.Sprite):
+    image = load_image(health_array[health])
+
+    def __init__(self, healtth):
+        super().__init__(all_sprites)
+        self.healtth = healtth
+        self.k = 0
+        self.rect = self.image.get_rect()
+        self.image = load_image(health_array[self.healtth - self.k])
+        self.k -= 1
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -78,8 +95,6 @@ class Bullet(pygame.sprite.Sprite):
     def update(self):
         # если ещё в небе
         self.rect = self.rect.move(0, -10)
-        # if pygame.sprite.spritecollideany(self, bomb_group):
-        #     self.remove(bullet_group)
 
 
 running = True
