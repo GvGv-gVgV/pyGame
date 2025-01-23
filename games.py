@@ -9,7 +9,6 @@ size = width, height = 1000, 1000
 screen = pygame.display.set_mode(size)
 fps = 60
 clock = pygame.time.Clock()
-health = 3
 health_array = ['0.png', '1.png', '2.png', '3.png']
 
 
@@ -25,6 +24,7 @@ def load_image(name, colorkey=None):
 
 all_sprites = pygame.sprite.Group()
 bullet_group = pygame.sprite.Group()
+GOG = pygame.sprite.Group()
 bomb_group = pygame.sprite.Group()
 SPAWN = pygame.USEREVENT + 1
 pygame.time.set_timer(SPAWN, 800)
@@ -40,6 +40,67 @@ sprite2.image = load_image("yl2.png")
 sprite2.rect = sprite2.image.get_rect()
 all_sprites.add(sprite2)
 sprite2.rect.y = height - 200
+
+
+class Health(pygame.sprite.Sprite):
+    health = 3
+    image = load_image(health_array[health])
+
+    def __init__(self, health=health):
+        super().__init__(all_sprites)
+        self.add(all_sprites)
+        self.image = Health.image
+        self.health = health
+        self.rect = self.image.get_rect()
+
+    def Hurt(self):
+        self.health -= 1
+        self.image = load_image(health_array[self.health])
+        if self.health == 0:
+            hp.GameOver()
+
+    def GameOver(self):
+        global running
+        running = False
+        spritee = pygame.sprite.Sprite(GOG)
+        spritee.image = load_image("gameover.png")
+        spritee.rect = sprite.image.get_rect()
+        GOG.add(spritee)
+        spritee.rect.x = -width
+        dist = 250
+        #
+        ch = True
+        while ch:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    ch = False
+            if spritee.rect.x <= -2.5:
+                spritee.rect.x += dist * clock.tick() / 100
+            screen.fill((255, 255, 255))
+            GOG.draw(screen)
+            score.show_score(screen)
+            pygame.display.flip()
+
+
+hp = Health()
+
+
+class Score(object):
+    def __init__(self):
+        self.black = 255, 165, 0
+        self.count = 0
+        self.font = pygame.font.SysFont("comicsans", 50, True, True)
+        self.text = self.font.render("Score : " + str(self.count), True, self.black)
+
+    def show_score(self, screen):
+        screen.blit(self.text, (700, 0))
+
+    def score_up(self):
+        self.count += 1
+        self.text = self.font.render("Score : " + str(self.count), True, self.black)
+
+
+score = Score()
 
 
 class Landing(pygame.sprite.Sprite):
@@ -60,23 +121,11 @@ class Landing(pygame.sprite.Sprite):
         if self.rect.y < height - 85:
             self.rect = self.rect.move(0, 2)
         else:
-            Health(health - 1)
+            hp.Hurt()
             self.remove(bomb_group)
         if pygame.sprite.spritecollideany(self, bullet_group):
-            self.image = load_image("boom.png")
             self.remove(bomb_group)
-
-
-class Health(pygame.sprite.Sprite):
-    image = load_image(health_array[health])
-
-    def __init__(self, healtth):
-        super().__init__(all_sprites)
-        self.healtth = healtth
-        self.k = 0
-        self.rect = self.image.get_rect()
-        self.image = load_image(health_array[self.healtth - self.k])
-        self.k -= 1
+            score.score_up()
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -132,6 +181,7 @@ while running:
     bullet_group.update()
     bomb_group.draw(screen)
     bomb_group.update()
+    score.show_score(screen)
     clock.tick(fps)
 
     pygame.display.flip()
